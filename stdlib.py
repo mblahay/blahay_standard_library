@@ -6,12 +6,22 @@ Created on Thu Dec 13 09:57:12 2018
 """
 import math
 import itertools
+from functools import reduce
 
-def nvl(arg,alt_val=None): # Similar concept to NVL function available in Oracle databases
-    'Allows for the substition of a value should the passed in argument be None.'
-    if arg == None:
-        return alt_val
-    return arg
+def nvl(value,alternate_value): # Similar concept to NVL function available in Oracle databases
+    """Provides for in-line substition of a None value.
+
+    If "value" is not None, then it will be returned; otherwise, if "value"
+    is None, then the "alternate_value" will be returned.
+
+    Both the value to be tested and an alternate value must be passed in.
+
+    This function mimics the functionality of the NVL function available
+    in Oracle databases.
+    """
+    if value == None:
+        return alternate_value
+    return value
     
 def zil(arg,alt_val=None): #zil stands for "zero item list," though the method works with anything that you can use len() with
     'Allows for the substitution of value if passed in argument has a length of zero'
@@ -20,7 +30,9 @@ def zil(arg,alt_val=None): #zil stands for "zero item list," though the method w
     return arg
     
 def select(fields, record):
-    'Returns a version of the dict record with only the designated fields. If field does not exist, then new dict key is assigned a value of None'
+    '''Returns a version of the dict record with only the designated fields. 
+       If field does not exist in source record, then in the new recordd the 
+       dict key is assigned a value of None'''
     return {x:record.get(x) for x in fields}
 
 def anyin(l1,l2):
@@ -30,17 +42,25 @@ def anyin(l1,l2):
             return True        
     return False        
 
-def nfunc(arg, function = None, nfunction = None, nval = None):
+def nfunc(arg, function = None, alt_function = None, alt_val = None):
+    '''
+    Similar in concept to nvl, but used with function calls. The need for this 
+    method arrises out of python's weak typing model because it is possible to 
+    receive different types back from function calls. As such it is sometimes
+    difficult to manage calling return objects functions as the desired method
+    may not alwasy be available. This method allows you to define an alternate
+    execution path based on the non-existance of the desired method.
+    '''
     if arg:
         if function:
             return function(arg)
         else:
             return arg
     else:
-        if nfunction:
-            return nfunction(arg)
+        if alt_function:
+            return alt_function(alt_arg)
         else:
-            return nval
+            return alt_val
         
 def isprime(arg):
     if type(arg) != int:
@@ -110,6 +130,156 @@ def like(arg, pat, single_char='_', multi_wild='%'):
     z = re.sub(single_char,'.',y)
     return bool(re.fullmatch(z,arg))
     
+def regexp_like(args, argp):
+    '''
+    Having trouble writing the like function as it is implemented using regular
+    expressions, and trying to escape all the special characters is problematic.
+    Insted writing a function that utilizes a regular expression pattern is much
+    easier yet provides the benefit of a familiar (if you are from the database 
+    domain) and intuitive interface.
+    This function will return a simple True or False, no match object.
+    '''
+    from re import search 
+    return bool(search(argp, args)) #Simply execute the search method using the string and pattern, then interpret the existance of a returned match object into a True of False using the bool constructor.
+
+def regexp_substr():
+    pass
+
+def regexp_replace():
+    pass
+    
+def listget(arg, idx):
+    '''
+    Function that emulates the functionality of the get function of dictionaries
+    Should an out of bounds index be provided, then None will be returned instead
+    of an exception. This is usefule in situtions where you don't want to have to 
+    constantly check to see whether you out of bounds with the index.
+    Works best when the the list does not contain elements that are None.
+    '''
+    try:
+        return arg[idx]
+    except IndexError:
+        return None
+        
+def chomp(arg, chomp_char='\n'):
+    '''
+    Modeled after the perl function of the same name.
+    Purpose is to remove new line characters from end of string during file processing.
+    This fuction is meant to act on strings. Functionality with other data types that
+    support array like access is undefined.
+    '''
+    if len(arg) >= len(chomp_char) and arg[-1*len(chomp_char):] == chomp_char:
+        return arg[0:-1*len(chomp_char)] # IF the final character is a new line, then return everything up to that character
+    return arg
+
+def reduce2(function, sequence, initial=None, finisher=None):
+    '''
+    Support reduce operations that require a final step after the reduce has
+    been performed.
+    '''
+    reduce_result=reduce(function,sequence,initial)
+    if finisher:
+        return finisher(reduce_result)
+    return reduce_result
+    
+def reduce_avg(sequence, target=None):
+    '''
+    A reduce driven implementation of average that allows for the target field
+    to be defined by a function
+    '''
+    m=map(nvl(target,lambda x:x),sequence)
+    return reduce2(lambda x,y: (x[0] + y,x[1]+1) , m, (0,0), lambda x: x[0]/x[1])
+   
+   
+def reduce_sum(sequence, target=None):
+    '''
+    A reduce driven implementation of sum that allows for the target field
+    to be defined by a function
+    '''
+    m=map(nvl(target,lambda x:x),sequence)
+    return reduce2(lambda x,y: x+y, m,0)
+    
+def group_aggregate_sum(target):
+    return (lambda x,y:x+y,lambda:0,target,None)
+    
+def group_aggregate_avg(target): # I need to figure out how to implement a finisher function with this one
+    return (lambda x,y:(x[0]+y,x[1]+1),lambda:(0,0),target,None)
+
+def nmax(*y):
+    '''
+    An implementation of min which disregards any None values.
+    Be aware that at least one none None value must be passed, otherwise
+    a ValueError is raised by min
+    '''
+    return max(filter(lambda x:x!=None,y))
+
+def group_aggregate_max(target):
+    return (lambda x,y:nmax(x,y),lambda:None,target,None)
+    
+def nmin(*y):
+    '''
+    An implementation of min which disregards any None values.
+    Be aware that at least one none None value must be passed, otherwise
+    a ValueError is raised by min
+    '''
+    return min(filter(lambda x:x!=None,y))
+
+def group_aggregate_min(target):
+    return (lambda x,y:nmin(x,y),lambda:None,target,None)
+
+group_aggregate_count = (lambda x,y:x+1,lambda:0,lambda x:None,None)
+    
+def group_by_proto(key, sequence, aggregate):
+    '''
+    This is the prototype of the group by function. It only allows the use of a single aggregate
+    '''
+    from collections import defaultdict
+    def f(x,y):
+        x[key(y)]=aggregate[0](x[key(y)],aggregate[2](y))
+        return x
+    return reduce2(f,sequence,defaultdict(aggregate[1]))
+    
+def group_by(key, sequence, *aggregates): # Need to implement a finisher
+    '''
+    A general aggregate grouping function that allows the processing of multiple 
+    aggregates at the same time. The output is a dictionary whose keys reference
+    a list of values (the aggregations).
+    Aggregates are to be tuples (or tuple like) with four values: 
+    1. The aggregate function
+    2. Starting value
+    3. Function defining the value to aggregate (usually a function that is able to isolate the value from a record)
+    4. A finisher function if such applies (avg uses a finisher)
+    The prebuilt aggregates already typically provide these items for you, except for #3
+    '''
+    from collections import defaultdict
+    def f(x,y):  # This is the function for reduce which will iterate through all the aggregations for each record processed.
+        for i in range(len(aggregates)):
+            x[key(y)][i]=aggregates[i][0](x[key(y)][i],aggregates[i][2](y))
+        return x
+    def d():  # This function is used to create the default value for the defaultdict
+        l=list()
+        for i in aggregates:
+            l.append(i[1]())
+        return l
+
+    r = reduce2(f,sequence,defaultdict(d))
+    #finalizer needs to go here.
+    return r
+ 
+
+def none_on_exception(call, exception_cls=None, *args,**kargs):
+    '''
+    The idea here is to provide a graceful and succinct way to handle exceptions
+    that occur when executing a callable for which an exception is reasonably 
+    expected and will be ignored. If an exception occurs then return None.
+    Be forwarned, all exceptions will be caught.
+    '''
+    et=nvl(exception_cls,())
+    try:
+        return call(*args,**kargs)
+    except et:
+        return None
+   
 ##############################################################################
 ## Standard Data sets will appear below this line
 ## Most probably will place standard data sets in a separate module at some point
