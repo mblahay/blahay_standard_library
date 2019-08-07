@@ -7,6 +7,7 @@ Created on Thu Dec 13 09:57:12 2018
 import math
 import itertools
 from functools import reduce
+from collections import defaultdict
 
 def nvl(value,alternate_value): # Similar concept to NVL function available in Oracle databases
     """Provides for in-line substition of a None value.
@@ -130,37 +131,7 @@ def like(arg, pat, single_char='_', multi_wild='%'):
     z = re.sub(single_char,'.',y)
     return bool(re.fullmatch(z,arg))
     
-def regexp_like(args, argp):
-    '''
-    Having trouble writing the like function as it is implemented using regular
-    expressions, and trying to escape all the special characters is problematic.
-    Insted writing a function that utilizes a regular expression pattern is much
-    easier yet provides the benefit of a familiar (if you are from the database 
-    domain) and intuitive interface.
-    This function will return a simple True or False, no match object.
-    '''
-    from re import search 
-    return bool(search(argp, args)) #Simply execute the search method using the string and pattern, then interpret the existance of a returned match object into a True of False using the bool constructor.
-
-def regexp_substr():
-    pass
-
-def regexp_replace():
-    pass
     
-def listget(arg, idx):
-    '''
-    Function that emulates the functionality of the get function of dictionaries
-    Should an out of bounds index be provided, then None will be returned instead
-    of an exception. This is usefule in situtions where you don't want to have to 
-    constantly check to see whether you out of bounds with the index.
-    Works best when the the list does not contain elements that are None.
-    '''
-    try:
-        return arg[idx]
-    except IndexError:
-        return None
-        
 def chomp(arg, chomp_char='\n'):
     '''
     Modeled after the perl function of the same name.
@@ -251,7 +222,7 @@ def group_by(key, sequence, *aggregates): # Need to implement a finisher
     4. A finisher function if such applies (avg uses a finisher)
     The prebuilt aggregates already typically provide these items for you, except for #3
     '''
-    from collections import defaultdict
+
     def f(x,y):  # This is the function for reduce which will iterate through all the aggregations for each record processed.
         for i in range(len(aggregates)):
             x[key(y)][i]=aggregates[i][0](x[key(y)][i],aggregates[i][2](y))
@@ -279,7 +250,8 @@ def none_on_exception(call, exception_cls=None, *args,**kargs):
         return call(*args,**kargs)
     except et:
         return None
-   
+noe=none_on_exception  # A simply alias is in order for this one
+
 ##############################################################################
 ## Standard Data sets will appear below this line
 ## Most probably will place standard data sets in a separate module at some point
