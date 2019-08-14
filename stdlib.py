@@ -269,12 +269,26 @@ def random_gauss_gen(mu,std):
     '''
     As the name implies, this is a generator for a random gaussian distribution.
     This generator allows using the random module's gaussian generator with 
-    iterator functions. Becareful, this generator will create an unlimited
+    iterator functions. Be careful, this generator will create an unlimited
     number of random numbers if not properly limited, thereby reducing entropy
     available in a system.
     '''
     while 1==1:
         yield random.gauss(mu,std)
+        
+
+class interleave:
+    '''
+    An iterable that creates an iterator to interleave any number of iterables
+    into a single. Iteration stops with the first attempt to pull a value from
+    an iterator that reports a StopIterator exception.
+    '''
+    def __init__(self,*args):
+        self._iters=itertools.cycle(map(lambda x: iter(x),args))
+    def __iter__(self):
+        return self
+    def __next__(self):
+        return next(next(self._iters))
         
 
 ##############################################################################
