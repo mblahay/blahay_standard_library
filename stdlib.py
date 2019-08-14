@@ -8,6 +8,8 @@ import math
 import itertools
 from functools import reduce
 from collections import defaultdict
+import random
+import re
 
 def nvl(value,alternate_value): # Similar concept to NVL function available in Oracle databases
     """Provides for in-line substition of a None value.
@@ -123,10 +125,20 @@ def merge_join(left=[],right=[],left_key=lambda x:x,right_key=lambda x:x):
             left_val,left_exhausted = getnext(left_iter)
 
 def like(arg, pat, single_char='_', multi_wild='%'):
-    'An string/pattern comparison function that uses a database style pattern'
+    '''
+    An string/pattern comparison function that uses a database style pattern
     
+    Though it is possible to change the single and multi-match characters, it
+    is advised to not do so at this point in time as any intersections with 
+    re special characters will yield bad results.
+    
+    Parameters:
+    -----------
+    arg - This is the string that is being matched
+    pat - This is the pattern that is being looked for
+    '''
     # The way this works is to covert the database style pattern to a regular expression
-    x = re.sub('([][.*^$()])','\\\1',pat) #excape any re specific syntactic items that are in the pattern
+    x = re.sub(r'([][\.*^$()])',r'\\\1',pat) #excape any re specific syntactic items that are in the pattern
     y = re.sub(multi_wild,'.*',x)
     z = re.sub(single_char,'.',y)
     return bool(re.fullmatch(z,arg))
@@ -143,10 +155,12 @@ def chomp(arg, chomp_char='\n'):
         return arg[0:-1*len(chomp_char)] # IF the final character is a new line, then return everything up to that character
     return arg
 
-def reduce2(function, sequence, initial=None, finisher=None):
+def reduce_finish(function, sequence, initial=None, finisher=None):
     '''
     Support reduce operations that require a final step after the reduce has
     been performed.
+
+    Without a finisher argument, this functions exactly like reduce.
     '''
     reduce_result=reduce(function,sequence,initial)
     if finisher:
@@ -238,19 +252,30 @@ def group_by(key, sequence, *aggregates): # Need to implement a finisher
     return r
  
 
-def none_on_exception(call, exception_cls=None, *args,**kargs):
+def none_on_exception(call, *args,**kargs):
     '''
     The idea here is to provide a graceful and succinct way to handle exceptions
     that occur when executing a callable for which an exception is reasonably 
     expected and will be ignored. If an exception occurs then return None.
     Be forwarned, all exceptions will be caught.
     '''
-    et=nvl(exception_cls,())
     try:
         return call(*args,**kargs)
-    except et:
+    except:  #Sadly I cannot control the exception type. It appears a new function would be needed for each exception type if is isn't desired to catch all of them.
         return None
-noe=none_on_exception  # A simply alias is in order for this one
+noe=none_on_exception  # A simple alias is in order for this one
+
+def random_gauss_gen(mu,std):
+    '''
+    As the name implies, this is a generator for a random gaussian distribution.
+    This generator allows using the random module's gaussian generator with 
+    iterator functions. Becareful, this generator will create an unlimited
+    number of random numbers if not properly limited, thereby reducing entropy
+    available in a system.
+    '''
+    while 1==1:
+        yield random.gauss(mu,std)
+        
 
 ##############################################################################
 ## Standard Data sets will appear below this line
