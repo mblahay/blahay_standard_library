@@ -1,4 +1,6 @@
-from re import search
+import re
+import itertools
+import blahay_standard_library as bsl
 
 def regexp_like(args, argp):
     '''
@@ -13,12 +15,22 @@ def regexp_like(args, argp):
 
     argp - This is the pattern that is used when searching args
     '''
-    return bool(search(argp, args)) # Simply execute the search method using the string and pattern, 
-                                    # then interpret the existance of a returned match object into 
-                                    # a True of False using the bool constructor.
+    return bool(re.search(argp, args)) # Simply execute the search method using the string and pattern, 
+                                       # then interpret the existance of a returned match object into 
+                                       # a True of False using the bool constructor.
 
 def regexp_substr():
     pass
 
 def regexp_replace():
     pass
+
+def regexp_parse(args, pat):
+    '''
+    Separate the string args by pat and denote which elements are 
+    a pattern match and which ones are not.
+    '''
+
+    x=zip(re.split(pat,args),itertools.repeat(False))
+    y=zip(re.findall(pat,args),itertools.repeat(True))
+    return bsl.interleave(x,y)
