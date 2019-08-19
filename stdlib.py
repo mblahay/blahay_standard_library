@@ -12,7 +12,8 @@ import random
 import re
 
 def nvl(value,alternate_value): # Similar concept to NVL function available in Oracle databases
-    """Provides for in-line substition of a None value.
+    """
+    Provides for in-line substition of a None value.
 
     If "value" is not None, then it will be returned; otherwise, if "value"
     is None, then the "alternate_value" will be returned.
@@ -25,13 +26,33 @@ def nvl(value,alternate_value): # Similar concept to NVL function available in O
     if value == None:
         return alternate_value
     return value
+
+
+def coalesce(*args):
+    """
+    Continuing the trend started with nvl, here is a pythong implementation
+    of the coalesce function.
+
+    Any number of arguments are accepted. The first argument that is not 
+    a None value will be returned. If all arguments are None, then None will
+    be returned.
+
+    This function mimics the functionaly of the standard SQL function of
+    the same name.
+    """
+    for x in args:
+        if x != None:
+            return x
+    return None    
     
+
 def zil(arg,alt_val=None): #zil stands for "zero item list," though the method works with anything that you can use len() with
     'Allows for the substitution of value if passed in argument has a length of zero'
     if len(arg) == 0:
         return alt_val
     return arg
-    
+
+
 def select(fields, record):
     '''Returns a version of the dict record with only the designated fields. 
        If field does not exist in source record, then in the new recordd the 
