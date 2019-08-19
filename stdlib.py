@@ -291,6 +291,16 @@ class interleave:
         return next(next(self._iters))
         
 
+def isiterable(arg):
+    '''
+    A concise way to determine whether an object is an iterable
+    Also a little more self documenting than just using the hasattr syntax
+    '''
+    return hasattr(arg,'__iter__') # Yes, the test is that simple, at least as far as I know.
+                                       # I may discover there is more to it in the future
+    
+    
+
 ##############################################################################
 ## Standard Data sets will appear below this line
 ## Most probably will place standard data sets in a separate module at some point
