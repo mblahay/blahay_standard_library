@@ -10,6 +10,7 @@ from functools import reduce
 from collections import defaultdict
 import random
 import re
+import sys
 
 def nvl(value,alternate_value): # Similar concept to NVL function available in Oracle databases
     """
@@ -320,6 +321,14 @@ def isiterable(arg):
     return hasattr(arg,'__iter__') # Yes, the test is that simple, at least as far as I know.
                                        # I may discover there is more to it in the future
     
+def eprint(*args,**kargs):
+    '''
+    Convenience function for printing to standard error
+
+    credit should be given to MarcH
+    https://stackoverflow.com/questions/5574702/how-to-print-to-stderr-in-python
+    '''
+    print(*args, file=sys.stderr, **kargs)                                    
     
 
 ##############################################################################
